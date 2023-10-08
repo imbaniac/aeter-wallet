@@ -1,33 +1,21 @@
-import { Button } from "@/components/ui/button";
-import { NewProfile } from "@/pages/NewProfile";
-
+import { useNavigate } from "@tanstack/react-router";
 import { HDNodeWallet } from "ethers";
-import { useState } from "react";
 
-const createMnemonicAccounts = (num: number) => {
-  const mnemonic = HDNodeWallet.createRandom();
-
-  localStorage.setItem("phrase", mnemonic.mnemonic?.phrase || "");
-  const accounts = [];
-
-  for (let i = 0; i < num; i++) {
-    accounts.push(mnemonic.deriveChild(i));
-  }
-
-  return accounts;
-};
+import { Button } from "@/components/ui/button";
 
 export const Welcome = () => {
-  const [accounts, setAccounts] = useState<HDNodeWallet[]>([]);
+  const navigate = useNavigate();
 
   const handleNewWallet = () => {
-    const accounts = createMnemonicAccounts(5);
-    setAccounts(accounts);
+    const mnemonic = HDNodeWallet.createRandom();
+
+    // TODO: change to SQLite
+    localStorage.setItem("phrase", mnemonic.mnemonic?.phrase || "");
+
+    navigate({ to: "/profile/new" });
   };
 
-  return accounts.length ? (
-    <NewProfile accounts={accounts} />
-  ) : (
+  return (
     <div className="flex flex-col items-center justify-center gap-16 h-full">
       <h1 className="text-5xl font-bold">Welcome to Æter</h1>
       <section className="flex flex-col gap-4">

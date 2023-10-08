@@ -1,3 +1,10 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useNavigate } from "@tanstack/react-router";
+import { appWindow } from "@tauri-apps/api/window";
+import { emit } from "@tauri-apps/api/event";
+
 import {
   Form,
   FormControl,
@@ -7,9 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
   Select,
   SelectContent,
@@ -17,10 +21,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { HDNodeWallet } from "ethers";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { HDNodeWallet, randomBytes, uuidV4 } from "ethers";
 
 const NETWORKS = [
   {
@@ -46,10 +50,10 @@ const formSchema = z.object({
   }),
 });
 
-type Props = { accounts: HDNodeWallet[] };
-
-export const NewProfile = ({ accounts }: Props) => {
+export const NewProfile = () => {
   const navigate = useNavigate();
+  const [accounts, setAccounts] = useState<HDNodeWallet[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,11 +63,41 @@ export const NewProfile = ({ accounts }: Props) => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  useEffect(() => {
+    // TODO: Change to SQLite
+    const phrase = localStorage.getItem("phrase") || "";
+    const mnemonic = HDNodeWallet.fromPhrase(phrase);
+
+    const accounts = [];
+
+    for (let i = 0; i < 5; i++) {
+      accounts.push(mnemonic.deriveChild(i));
+    }
+
+    setAccounts(accounts);
+  }, []);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     // TODO: should extends existing profiles
     // TODO: rewrite to SQLite
-    localStorage.setItem("profiles", JSON.stringify([values]));
-    navigate({ to: "/" });
+    const existingProfiles = JSON.parse(
+      localStorage.getItem("profiles") || "[]"
+    );
+    await localStorage.setItem(
+      "profiles",
+      JSON.stringify([
+        ...existingProfiles,
+        { ...values, id: uuidV4(randomBytes(8)) },
+      ])
+    );
+
+    if (appWindow.label === "new_profile") {
+      // TODO: Change to specific window event
+      await emit("profile-created");
+      appWindow.close();
+    } else {
+      navigate({ to: "/" });
+    }
   };
 
   return (
