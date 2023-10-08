@@ -162,8 +162,9 @@ export const NewProfile = () => {
                       <div
                         key={account.address}
                         className={cn(
-                          "bg-slate-200 rounded-xl px-4 py-2 text-xs font-bold cursor-pointer",
-                          field.value === account.address && "bg-slate-300"
+                          "bg-slate-100  rounded-xl px-4 py-2 text-xs font-bold cursor-pointer",
+                          field.value === account.address &&
+                            "bg-primary text-white"
                         )}
                         onClick={() => field.onChange(account.address)}
                       >

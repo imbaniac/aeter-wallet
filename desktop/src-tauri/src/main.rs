@@ -16,7 +16,7 @@ async fn open_new_profile_window(app: AppHandle) -> Result<(), String> {
     let result = WindowBuilder::new(&app, "new_profile", WindowUrl::App("profile/new".into()))
         .fullscreen(false)
         .resizable(false)
-        .max_inner_size(400., 600.)
+        .max_inner_size(400., 500.)
         .title("New Profile")
         .center()
         .build();
