@@ -5,6 +5,10 @@
       "path": "./desktop"
     },
     {
+      "name": "extension",
+      "path": "./extension"
+    },
+    {
       "name": "root",
       "path": "./"
     }

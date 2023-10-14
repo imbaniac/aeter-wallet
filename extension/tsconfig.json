@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+
+      "allowJs": false,
+      "target": "ESNext",
+      "module": "ESNext",
+      "jsx": "react-jsx",
+      "skipLibCheck": true,
+      "esModuleInterop": true,
+      "resolveJsonModule": true,
+      "moduleResolution": "node",
+      "types": ["node"],
+      "noFallthroughCasesInSwitch": true,
+      "allowSyntheticDefaultImports": true,
+      "lib": ["dom", "dom.iterable", "esnext"],
+      "forceConsistentCasingInFileNames": true,
+      "typeRoots": ["src/global.d.ts", "node_modules/@types"],
+    },
+    "include": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/**/*.ts",
+      "**/**/*.tsx",
+      "utils",
+      "vite.config.ts",
+      "node_modules/@types",
+      "src/global.d.ts"
+    ]
+  }
+  
