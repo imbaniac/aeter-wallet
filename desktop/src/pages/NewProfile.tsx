@@ -4,6 +4,8 @@ import * as z from "zod";
 import { useNavigate } from "@tanstack/react-router";
 import { appWindow } from "@tauri-apps/api/window";
 import { emit } from "@tauri-apps/api/event";
+import { useEffect, useState } from "react";
+import { HDNodeWallet, Mnemonic, randomBytes, uuidV4 } from "ethers";
 
 import {
   Form,
@@ -23,8 +25,6 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import { HDNodeWallet, randomBytes, uuidV4 } from "ethers";
 
 const NETWORKS = [
   {
@@ -66,12 +66,12 @@ export const NewProfile = () => {
   useEffect(() => {
     // TODO: Change to SQLite
     const phrase = localStorage.getItem("phrase") || "";
-    const mnemonic = HDNodeWallet.fromPhrase(phrase);
+    const mnemonic = Mnemonic.fromPhrase(phrase);
 
     const accounts = [];
 
     for (let i = 0; i < 5; i++) {
-      accounts.push(mnemonic.deriveChild(i));
+      accounts.push(HDNodeWallet.fromMnemonic(mnemonic, `m/44'/60'/0'/0/${i}`));
     }
 
     setAccounts(accounts);
@@ -87,7 +87,13 @@ export const NewProfile = () => {
       "profiles",
       JSON.stringify([
         ...existingProfiles,
-        { ...values, id: uuidV4(randomBytes(8)) },
+        {
+          ...values,
+          id: uuidV4(randomBytes(8)),
+          privateKey: accounts.find(
+            (account) => values.address === account.address
+          )?.privateKey,
+        },
       ])
     );
 
@@ -162,13 +168,14 @@ export const NewProfile = () => {
                       <div
                         key={account.address}
                         className={cn(
-                          "bg-slate-100  rounded-xl px-4 py-2 text-xs font-bold cursor-pointer",
+                          "bg-slate-100 rounded-xl px-4 py-2 text-xs font-bold cursor-pointer flex justify-between font-mono gap-2",
                           field.value === account.address &&
                             "bg-primary text-white"
                         )}
                         onClick={() => field.onChange(account.address)}
                       >
-                        {account.address}
+                        <span>{account.address}</span>
+                        <span className="text-xs tracking-tighter">0 ETH</span>
                       </div>
                     ))}
                   </ul>

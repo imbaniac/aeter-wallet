@@ -10,7 +10,12 @@ export const Welcome = () => {
     const mnemonic = HDNodeWallet.createRandom();
 
     // TODO: change to SQLite
-    localStorage.setItem("phrase", mnemonic.mnemonic?.phrase || "");
+    // FIXME: uncomment
+    // localStorage.setItem("phrase", mnemonic.mnemonic?.phrase || "");
+    localStorage.setItem(
+      "phrase",
+      "test test test test test test test test test test test junk"
+    );
 
     navigate({ to: "/profile/new" });
   };

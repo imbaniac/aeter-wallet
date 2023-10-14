@@ -6,6 +6,7 @@ use tauri::{AppHandle, WindowBuilder, WindowUrl};
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::default().build())
+        .plugin(tauri_plugin_websocket::init())
         .invoke_handler(tauri::generate_handler![open_new_profile_window])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

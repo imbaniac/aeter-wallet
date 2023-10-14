@@ -8,13 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ethers } from "ethers";
 
-type Profile = {
+type BaseProfile = {
   id: string;
   name: string;
   network: string;
   address: string;
+  privateKey: string;
 };
+
+type Profile = BaseProfile & { balance: bigint };
 
 export const Wallet = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -24,12 +28,31 @@ export const Wallet = () => {
     unlistenEvent: () => void;
   }>();
 
-  useEffect(() => {
+  const processProfiles = async () => {
     const profilesStringified = localStorage.getItem("profiles") || "";
-    const savedProfiles = JSON.parse(profilesStringified);
-    setProfiles(savedProfiles);
-    setActiveProfile(savedProfiles[0]);
+    const savedProfiles: Profile[] = JSON.parse(profilesStringified);
+    const savedProfilesWithBalances = await Promise.all(
+      savedProfiles.map(async (profile) => {
+        const wallet = new ethers.Wallet(
+          profile.privateKey,
+          new ethers.JsonRpcProvider("http://127.0.0.1:8545")
+        );
 
+        const balance =
+          (await wallet.provider?.getBalance(profile.address)) || BigInt(0);
+
+        return {
+          ...profile,
+          balance,
+        };
+      })
+    );
+    setProfiles(savedProfilesWithBalances);
+    setActiveProfile(savedProfilesWithBalances[0]);
+  };
+
+  useEffect(() => {
+    processProfiles();
     return () => {
       unlisteners?.unlistenEvent();
     };
@@ -38,10 +61,7 @@ export const Wallet = () => {
   const handleNewProfile = async () => {
     await invoke("open_new_profile_window");
 
-    const unlisten = await listen("profile-created", () => {
-      const profilesStringified = localStorage.getItem("profiles") || "";
-      setProfiles(JSON.parse(profilesStringified));
-    });
+    const unlisten = await listen("profile-created", processProfiles);
     setUnlisteners({ unlistenEvent: unlisten });
   };
 
@@ -62,7 +82,9 @@ export const Wallet = () => {
               >
                 <div className="flex flex-col gap-1">
                   <h3 className="font-semibold text-sm">{profile.name}</h3>
-                  <span className="text-xs">0 ETH</span>
+                  <span className="text-xs">
+                    {ethers.formatEther(profile?.balance || 0n)}
+                  </span>
                 </div>
                 <div className="flex flex-col text-xs text-right gap-1">
                   <span>{truncateEthAddress(profile.address)}</span>
@@ -77,14 +99,16 @@ export const Wallet = () => {
         </Button>
       </section>
       <Separator orientation="vertical" />
-      <main className="w-full">
-        <header className="flex justify-between items-center text-slate-100 bg-primary w-full p-4 rounded-b-xl">
+      <main className="flex flex-col gap-4 w-full p-4">
+        <header className="flex justify-between items-center text-slate-100 bg-primary w-full p-4 rounded-xl">
           <div>
             <div className="flex gap-2 items-center">
               <h1 className="text-lg">{activeProfile?.name}</h1>
               <span className="text-sm">{activeProfile?.address}</span>
             </div>
-            <span className="font-bold">100.0003231 ETH</span>
+            <span className="font-bold">
+              {ethers.formatEther(activeProfile?.balance || 0n)}
+            </span>
           </div>
           <div className="flex flex-col text-xs items-end gap-2">
             <Badge variant="outline" className="w-fit text-white">
@@ -94,7 +118,7 @@ export const Wallet = () => {
             <span>17:44:25 14.02.2069</span>
           </div>
         </header>
-        <section className="flex p-4">
+        <section className="flex">
           <Tabs defaultValue="account" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="transactions">Transactions</TabsTrigger>
